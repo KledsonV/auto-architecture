@@ -21,6 +21,7 @@ jobs:
             exit 1
           fi
 
+jobs:
   npm-install:
     runs-on: ubuntu-latest
 
