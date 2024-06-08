@@ -1,0 +1,37 @@
+name: CI Workflow
+
+on:
+  push:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+jobs:
+  check-branch-name:
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+
+      - name: Check branch name
+        run: |
+          if [[ ! "${{ github.head_ref }}" =~ ^feature/.* ]]; then
+            echo "Branch name must start with 'feature/'."
+            exit 1
+          fi
+
+  npm-install:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v2
+        with:
+          node-version: '22'
+
+      - name: Install dependencies
+        run: npm install
