@@ -2,6 +2,8 @@ import { execSync } from "child_process";
 import readline from "readline";
 import fs from "fs";
 import chalk from "chalk";
+import { fileURLToPath } from "url";
+import path from "path";
 
 export async function updateDependencies() {
   const updates = await checkForUpdates();
@@ -36,7 +38,8 @@ export async function updateDependencies() {
       packageJson.version = updates[0].latestVersion;
     });
 
-    fs.writeFileSync("package.json", JSON.stringify(packageJson, null, 2));
+    let findPackage = findPackageJson();
+    fs.writeFileSync(findPackage, JSON.stringify(packageJson, null, 2));
     process.stdout.write(
       chalk.green.dim.bold(
         '\n Updated dependencies in package.json. Run "npm install" to install the new versions.\n\n'
@@ -49,9 +52,25 @@ export async function updateDependencies() {
   }
 }
 
+const findPackageJson = () => {
+  var currentDir = fileURLToPath(import.meta.url);
+  while (currentDir !== path.parse(currentDir).root) {
+    const packageJsonPath = path.join(currentDir, "package.json");
+    if (fs.existsSync(packageJsonPath)) {
+      return packageJsonPath;
+    }
+    currentDir = path.dirname(currentDir);
+  }
+};
+
 const readPackageJson = async () => {
-  const packageJson = fs.readFileSync("package.json");
-  return JSON.parse(packageJson);
+  try {
+    const findPackage = findPackageJson();
+    const packageJson = fs.readFileSync(findPackage, "utf-8");
+    return JSON.parse(packageJson);
+  } catch (error) {
+    return error;
+  }
 };
 
 const getLatestVersion = async (packageName) => {
@@ -66,7 +85,7 @@ const getLatestVersion = async (packageName) => {
   }
 };
 
-async function checkForUpdates() {
+const checkForUpdates = async () => {
   const packageJson = await readPackageJson();
   const currentVersion = packageJson.version;
   const packageName = packageJson.name;
@@ -78,9 +97,9 @@ async function checkForUpdates() {
   }
 
   return updates;
-}
+};
 
-function promptUser(question) {
+const promptUser = (question) => {
   const rl = readline.createInterface({
     input: process.stdin,
     output: process.stdout,
@@ -92,7 +111,7 @@ function promptUser(question) {
       resolve(answer);
     })
   );
-}
+};
 
 const loadingBar = async (total, ms) => {
   let bar = "";
