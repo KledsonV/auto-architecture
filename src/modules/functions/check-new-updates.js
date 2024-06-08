@@ -1,0 +1,114 @@
+import { execSync } from "child_process";
+import readline from "readline";
+import fs from "fs";
+import chalk from "chalk";
+
+export async function updateDependencies() {
+  const updates = await checkForUpdates();
+  await loadingBar(25, 25);
+
+  if (updates.length === 0) {
+    process.stdout.write(
+      chalk.green.dim.bold(" All dependencies are updated!\n\n")
+    );
+    return true;
+  }
+
+  process.stdout.write(chalk.red.dim.bold(" Outdated dependencies found:\n"));
+  updates.forEach(({ packageName, currentVersion, latestVersion }) => {
+    process.stdout.write(
+      chalk.red.dim.bold(
+        ` - ${packageName}: ${currentVersion}  →  ${latestVersion}\n\n`
+      )
+    );
+  });
+
+  const answer = await promptUser(
+    chalk.cyan.dim.bold(
+      " Do you want to update the dependency to the latest version? (Y/n): "
+    )
+  );
+
+  if (answer.toLowerCase() === "y") {
+    const packageJson = await readPackageJson();
+
+    updates.forEach(() => {
+      packageJson.version = updates[0].latestVersion;
+    });
+
+    fs.writeFileSync("package.json", JSON.stringify(packageJson, null, 2));
+    process.stdout.write(
+      chalk.green.dim.bold(
+        '\n Updated dependencies in package.json. Run "npm install" to install the new versions.\n\n'
+      )
+    );
+  } else {
+    process.stdout.write(
+      chalk.red.dim.bold(" Dependency update canceled.\n\n")
+    );
+  }
+}
+
+const readPackageJson = async () => {
+  const packageJson = fs.readFileSync("package.json");
+  return JSON.parse(packageJson);
+};
+
+const getLatestVersion = async (packageName) => {
+  try {
+    const version = execSync(`npm view ${packageName} version`, {
+      encoding: "utf8",
+    }).trim();
+    return version;
+  } catch (error) {
+    console.error(`Error getting version of ${packageName}:`, error);
+    return null;
+  }
+};
+
+async function checkForUpdates() {
+  const packageJson = await readPackageJson();
+  const currentVersion = packageJson.version;
+  const packageName = packageJson.name;
+  const updates = [];
+
+  const latestVersion = await getLatestVersion(packageJson.name);
+  if (latestVersion && currentVersion !== latestVersion) {
+    updates.push({ packageName, currentVersion, latestVersion });
+  }
+
+  return updates;
+}
+
+function promptUser(question) {
+  const rl = readline.createInterface({
+    input: process.stdin,
+    output: process.stdout,
+  });
+
+  return new Promise((resolve) =>
+    rl.question(question, (answer) => {
+      rl.close();
+      resolve(answer);
+    })
+  );
+}
+
+const loadingBar = async (total, ms) => {
+  let bar = "";
+  for (let i = 0; i < total; i++) {
+    bar += "#";
+    console.clear();
+    const percentage = Math.floor(((i + 1) / total) * 100);
+    process.stdout.write(chalk.green.dim.bold(`\n Checking for updates...\n`));
+    process.stdout.write(
+      chalk.cyan.dim.bold(` [${bar.padEnd(total)}]` + " " + percentage + "%\n")
+    );
+    await sleep(ms);
+  }
+  process.stdout.write("\n");
+};
+
+const sleep = async (ms) => {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+};
