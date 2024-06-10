@@ -1,6 +1,6 @@
 {
   "name": "auto-architecture",
-  "version": "1.0.4",
+  "version": "1.0.5",
   "type": "module",
   "main": "./src/app.js",
   "description": "Package",
@@ -20,7 +20,7 @@
     "ora": "^8.0.1"
   },
   "imports": {
-    "#modules/.*.js": "./src/modules/functions/*.js",
+    "#modules/.*.js": "./src/functions/*.js",
     "#variables/.*.js": "./src/global/*.js",
     "#architectureMVCJS/.*.js": "./src/modules/architectures/MVC/MVC_JS/*.js"
   },
