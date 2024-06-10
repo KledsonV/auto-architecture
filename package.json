@@ -20,7 +20,7 @@
     "ora": "^8.0.1"
   },
   "imports": {
-    "#modules/.*.js": "./src/functions/*.js",
+    "#modules/.*.js": "./src/modules/functions/*.js",
     "#variables/.*.js": "./src/global/*.js",
     "#architectureMVCJS/.*.js": "./src/modules/architectures/MVC/MVC_JS/*.js"
   },
